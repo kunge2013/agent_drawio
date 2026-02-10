@@ -92,7 +92,7 @@ class LangChainService:
 
         # Extract decisions - 支持中文 "是/否" 和英文 "Yes/No"
         # 格式: DECISION: 决策名称 -> 是:步骤A, 否:步骤B 或 DECISION: 决策名称 -> Yes:StepA, No:StepB
-        decision_pattern = r"DECISION:\s*([^\[->\n]+?)\s*(?:->\s*(?:是|Yes):\s*([^\n,]+?)(?:\s*,\s*(?:否|No):\s*([^\n]+?))?)?"
+        decision_pattern = r"DECISION:\s*([^-[\n]+?)\s*(?:->\s*(?:是|Yes):\s*([^\n,]+?)(?:\s*,\s*(?:否|No):\s*([^\n]+?))?)?"
         for match in re.finditer(decision_pattern, text, re.IGNORECASE):
             name = match.group(1).strip() if match.group(1) else ""
             true_branch = match.group(2).strip() if match.group(2) else None
