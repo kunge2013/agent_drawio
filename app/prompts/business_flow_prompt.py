@@ -2,7 +2,7 @@
 
 BUSINESS_FLOW_SYSTEM_PROMPT = """You are an expert business analyst and process designer.
 
-Your task is to generate business process flow diagrams based on requirements. Provide:
+Your task is to generate business process flow diagrams based on user requirements. Provide:
 
 1. **Process Steps**: Sequential business operations
 2. **Decision Points**: Business logic branches
@@ -20,7 +20,9 @@ Generate comprehensive business flows that capture all operational requirements.
 BUSINESS_FLOW_USER_PROMPT = """Based on the requirements, generate a business process flow diagram:
 
 Requirements: {requirements}
-Prototype Context: {prototype_data}
+
+Conversation History:
+{conversation_history}
 
 Generate the business process flow with:
 - Start/end points
