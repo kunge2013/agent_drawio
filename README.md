@@ -21,7 +21,7 @@ An AI-powered web application for generating prototype designs, UI flow diagrams
 ## Project Structure
 
 ```
-/home/fk/workspace/github/agent_drawio/
+agent_drawio/
 ├── app/
 │   ├── main.py                      # FastAPI entry point
 │   ├── config.py                    # Configuration
@@ -50,7 +50,7 @@ An AI-powered web application for generating prototype designs, UI flow diagrams
 ### 1. Clone and Navigate
 
 ```bash
-cd /home/fk/workspace/github/agent_drawio
+cd agent_drawio
 ```
 
 ### 2. Create Virtual Environment
@@ -103,7 +103,7 @@ OPENAI_MODEL=gpt-4o-mini
 ### 6. Run the Application
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python main.py
 ```
 
 The application will be available at `http://localhost:8000`
@@ -129,7 +129,8 @@ API documentation is available at `http://localhost:8000/api/docs`
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v1/` | GET | Health check |
+| `/` | GET | Root endpoint - serves the main UI |
+| `/health` | GET | Health check endpoint |
 | `/api/v1/chat/conversation` | POST | Create new conversation |
 | `/api/v1/chat/conversation/{id}` | GET | Get conversation details |
 | `/api/v1/chat/message` | POST | Send message and get AI response |
@@ -141,9 +142,11 @@ API documentation is available at `http://localhost:8000/api/docs`
 |---------------------|-------------|---------|
 | `DATABASE_URL` | MySQL connection string | - |
 | `OPENAI_API_KEY` | OpenAI API key | - |
-| `OPENAI_MODEL` | OpenAI model to use | `gpt-4o-mini` |
+| `OPENAI_MODEL` | OpenAI model to use | `qwen-plus` |
 | `OPENAI_TEMPERATURE` | LLM temperature (0-1) | `0.7` |
 | `DEBUG` | Enable debug mode | `false` |
+| `HOST` | Server host | `0.0.0.0` |
+| `PORT` | Server port | `8000` |
 
 ## Development
 
@@ -173,7 +176,7 @@ isort app/
 - Try a different model (e.g., `gpt-4o-mini` instead of `gpt-4`)
 
 **Port Already in Use**
-- Change port: `uvicorn app.main:app --port 8001`
+- Change port in `.env`: `PORT=8001`
 
 ## License
 
