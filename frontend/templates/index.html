@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrawIO Agent - AI Design Assistant</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <h1>DrawIO Agent</h1>
+            <p class="subtitle">AI-Powered Design & Diagram Generator</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Chat Section -->
+            <section class="chat-section">
+                <div class="chat-header">
+                    <h2>Design Conversation</h2>
+                    <button id="newConversation" class="btn-secondary">New Conversation</button>
+                </div>
+
+                <div id="chatMessages" class="chat-messages">
+                    <!-- Welcome message -->
+                    <div class="message bot">
+                        <div class="message-content">
+                            Welcome! I'm your AI design assistant. Describe your product requirements
+                            and I'll help you create prototypes, UI flows, and business process diagrams.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <textarea
+                        id="userInput"
+                        placeholder="Describe your product requirements (e.g., 'Create a task management app with user authentication, project boards, and team collaboration features')"
+                        rows="3"></textarea>
+                    <button id="sendMessage" class="btn-primary">
+                        <span class="btn-text">Send</span>
+                        <span class="btn-loading" style="display: none;">Sending...</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Generated Content Section -->
+            <section class="generated-content">
+                <div class="content-tabs">
+                    <button class="tab-btn active" data-tab="prototype">Prototype</button>
+                    <button class="tab-btn" data-tab="ui-flow">UI Flow</button>
+                    <button class="tab-btn" data-tab="business-flow">Business Flow</button>
+                    <button class="tab-btn" data-tab="documentation">Documentation</button>
+                </div>
+
+                <div class="content-panel">
+                    <div id="prototype-panel" class="panel active">
+                        <div id="prototype-content" class="panel-content">
+                            <p class="placeholder">Prototype design will appear here after you send a message.</p>
+                        </div>
+                    </div>
+                    <div id="ui-flow-panel" class="panel">
+                        <div id="ui-flow-content" class="panel-content">
+                            <p class="placeholder">UI flow diagram will appear here.</p>
+                        </div>
+                        <button id="exportUiFlow" class="btn-export" style="display: none;">
+                            Export .drawio
+                        </button>
+                    </div>
+                    <div id="business-flow-panel" class="panel">
+                        <div id="business-flow-content" class="panel-content">
+                            <p class="placeholder">Business flow diagram will appear here.</p>
+                        </div>
+                        <button id="exportBusinessFlow" class="btn-export" style="display: none;">
+                            Export .drawio
+                        </button>
+                    </div>
+                    <div id="documentation-panel" class="panel">
+                        <div id="documentation-content" class="panel-content">
+                            <p class="placeholder">Design documentation will appear here.</p>
+                        </div>
+                        <button id="exportDocumentation" class="btn-export" style="display: none;">
+                            Export .md
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
