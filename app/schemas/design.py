@@ -11,8 +11,6 @@ class DesignResponse(BaseModel):
     conversation_id: int
     name: str
     description: Optional[str] = None
-    prototype_data: Optional[Dict[str, Any]] = None
-    documentation: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

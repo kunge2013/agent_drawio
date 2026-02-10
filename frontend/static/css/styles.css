@@ -1,4 +1,4 @@
-/* DrawIO Agent - Main Stylesheet */
+/* Business Flow Designer - Main Stylesheet */
 :root {
     --primary-color: #2563eb;
     --primary-hover: #1d4ed8;
@@ -58,7 +58,7 @@ body {
 /* Main Content */
 .main-content {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 400px 1fr;
     gap: 20px;
     flex: 1;
     overflow: hidden;
@@ -124,7 +124,7 @@ body {
 }
 
 .message-content {
-    max-width: 75%;
+    max-width: 85%;
     padding: 12px 16px;
     border-radius: 12px;
     line-height: 1.5;
@@ -191,7 +191,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 100px;
+    min-width: 120px;
     justify-content: center;
 }
 
@@ -222,7 +222,9 @@ body {
 }
 
 .btn-export {
-    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     background-color: var(--primary-color);
     color: white;
     border: none;
@@ -238,6 +240,10 @@ body {
     background-color: var(--primary-hover);
 }
 
+.export-icon {
+    font-size: 1.1em;
+}
+
 /* Generated Content Section */
 .generated-content {
     background: var(--chat-bg);
@@ -249,33 +255,18 @@ body {
     flex-direction: column;
 }
 
-.content-tabs {
-    display: flex;
+.content-header {
+    padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background: var(--background-color);
 }
 
-.tab-btn {
-    flex: 1;
-    padding: 14px 16px;
-    background: none;
-    border: none;
-    cursor: pointer;
+.content-header h2 {
+    font-size: 1.1rem;
     font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    transition: all 0.2s;
-    border-bottom: 2px solid transparent;
-}
-
-.tab-btn:hover {
-    color: var(--text-color);
-    background-color: rgba(37, 99, 235, 0.05);
-}
-
-.tab-btn.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
 }
 
 .content-panel {
@@ -285,7 +276,7 @@ body {
 }
 
 .panel {
-    display: none;
+    display: flex;
     height: 100%;
     flex-direction: column;
 }
@@ -294,88 +285,76 @@ body {
     display: flex;
 }
 
-.panel-content {
+/* DrawIO Container */
+.drawio-container {
     flex: 1;
-    overflow-y: auto;
-    padding: 20px;
+    overflow: hidden;
+    background: #ffffff;
+    position: relative;
 }
 
-.panel-content::-webkit-scrollbar {
-    width: 6px;
+.drawio-canvas {
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    position: relative;
 }
 
-.panel-content::-webkit-scrollbar-track {
-    background: var(--background-color);
+.drawio-canvas > div {
+    width: 100% !important;
+    height: 100% !important;
 }
 
-.panel-content::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
-}
-
+/* Placeholder */
 .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     color: var(--text-muted);
     text-align: center;
-    padding: 40px 20px;
+    padding: 60px 40px;
+    height: 100%;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-/* Panel content styling */
-.panel-content p {
-    margin-bottom: 12px;
+.placeholder-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.placeholder p {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.placeholder-hint {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+/* Flow Preview */
+.flow-preview {
+    padding: 20px;
+    background: var(--background-color);
+    border-top: 1px solid var(--border-color);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.flow-description h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
+
+.flow-description p {
+    font-size: 0.85rem;
     line-height: 1.6;
-}
-
-.panel-content h1,
-.panel-content h2,
-.panel-content h3,
-.panel-content h4 {
-    margin-top: 16px;
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-.panel-content h1 { font-size: 1.5rem; }
-.panel-content h2 { font-size: 1.3rem; }
-.panel-content h3 { font-size: 1.1rem; }
-.panel-content h4 { font-size: 1rem; }
-
-.panel-content ul,
-.panel-content ol {
-    margin-left: 24px;
-    margin-bottom: 12px;
-}
-
-.panel-content li {
-    margin-bottom: 6px;
-}
-
-.panel-content code {
-    background: var(--bot-message-bg);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 0.9em;
-}
-
-.panel-content pre {
-    background: var(--bot-message-bg);
-    padding: 12px;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin-bottom: 12px;
-}
-
-.panel-content pre code {
-    background: none;
-    padding: 0;
-}
-
-.panel-content strong {
-    font-weight: 600;
-}
-
-.panel-content em {
-    font-style: italic;
+    color: var(--text-muted);
 }
 
 /* Error message */
@@ -402,11 +381,24 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* Code styling */
+code {
+    background: var(--bot-message-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9em;
+}
+
 /* Responsive */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
     .main-content {
         grid-template-columns: 1fr;
-        grid-template-rows: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+    }
+
+    .drawio-container {
+        min-height: 400px;
     }
 }
 
@@ -420,6 +412,12 @@ body {
     }
 
     .message-content {
-        max-width: 85%;
+        max-width: 90%;
+    }
+
+    .content-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
     }
 }

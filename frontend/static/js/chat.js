@@ -10,10 +10,8 @@ class ChatInterface {
         this.sendButton = document.getElementById('sendMessage');
         this.newConversationButton = document.getElementById('newConversation');
         this.currentConversationId = null;
-        this.currentDiagramIds = {
-            ui_flow: null,
-            business_flow: null
-        };
+        this.currentDiagramId = null;
+        this.currentFlowXML = null;
 
         this.init();
     }
@@ -63,8 +61,8 @@ class ChatInterface {
             // Add bot response
             this.addMessage(response.message, 'bot');
 
-            // Update generated content panels
-            this.updateContentPanels(response.generated_content);
+            // Update business flow diagram
+            this.updateBusinessFlow(response.generated_content);
 
         } catch (error) {
             this.hideTypingIndicator();
@@ -80,20 +78,27 @@ class ChatInterface {
         try {
             await api.newConversation();
             this.currentConversationId = null;
-            this.currentDiagramIds = { ui_flow: null, business_flow: null };
+            this.currentDiagramId = null;
+            this.currentFlowXML = null;
 
             // Clear chat messages except welcome
             this.messagesContainer.innerHTML = `
                 <div class="message bot">
                     <div class="message-content">
-                        Started a new conversation. Describe your product requirements
-                        and I'll help you create prototypes, UI flows, and business process diagrams.
+                        Started a new conversation. Describe your business process
+                        and I'll generate a professional flow diagram.
                     </div>
                 </div>
             `;
 
-            // Clear content panels
-            this.clearContentPanels();
+            // Clear diagram
+            if (drawioViewer) {
+                drawioViewer.clear();
+            }
+
+            // Hide export button
+            const exportBtn = document.getElementById('exportBusinessFlow');
+            if (exportBtn) exportBtn.style.display = 'none';
 
         } catch (error) {
             this.addMessage(`Error: ${error.message}`, 'bot', true);
@@ -120,7 +125,7 @@ class ChatInterface {
         indicator.innerHTML = `
             <div class="message-content">
                 <span class="loading-spinner"></span>
-                <span style="margin-left: 8px;">AI is thinking...</span>
+                <span style="margin-left: 8px;">AI is analyzing...</span>
             </div>
         `;
         this.messagesContainer.appendChild(indicator);
@@ -134,68 +139,43 @@ class ChatInterface {
         }
     }
 
-    updateContentPanels(content) {
-        // Update prototype panel
-        if (content.prototype) {
-            document.getElementById('prototype-content').innerHTML =
-                this.formatMessage(content.prototype);
+    updateBusinessFlow(content) {
+        if (!content || !content.business_flow) {
+            return;
         }
 
-        // Update UI flow panel
-        if (content.ui_flow) {
-            const uiContent = document.getElementById('ui-flow-content');
-            uiContent.innerHTML = `
-                <p>${content.ui_flow.preview || 'UI flow diagram generated'}</p>
-                <div style="margin-top: 12px; padding: 12px; background: #f1f5f9; border-radius: 8px;">
-                    <small style="color: #64748b;">Diagram ready for export</small>
-                </div>
-            `;
+        const businessFlow = content.business_flow;
 
-            // Store diagram ID for export
-            if (content.ui_flow.diagram_id) {
-                this.currentDiagramIds.ui_flow = content.ui_flow.diagram_id;
-                document.getElementById('exportUiFlow').style.display = 'block';
+        // Store diagram ID for export
+        if (businessFlow.diagram_id) {
+            this.currentDiagramId = businessFlow.diagram_id;
+        }
+
+        // Store XML for rendering and export
+        if (businessFlow.xml) {
+            this.currentFlowXML = businessFlow.xml;
+
+            // Render the diagram using DrawIO viewer
+            if (drawioViewer) {
+                drawioViewer.renderFromXML(businessFlow.xml);
             }
         }
 
-        // Update business flow panel
-        if (content.business_flow) {
-            const businessContent = document.getElementById('business-flow-content');
-            businessContent.innerHTML = `
-                <p>${content.business_flow.preview || 'Business flow diagram generated'}</p>
-                <div style="margin-top: 12px; padding: 12px; background: #f1f5f9; border-radius: 8px;">
-                    <small style="color: #64748b;">Diagram ready for export</small>
+        // Show export button
+        const exportBtn = document.getElementById('exportBusinessFlow');
+        if (exportBtn) exportBtn.style.display = 'block';
+
+        // Show text preview
+        const previewDiv = document.getElementById('flow-preview');
+        if (previewDiv && businessFlow.preview) {
+            previewDiv.innerHTML = `
+                <div class="flow-description">
+                    <h4>Generated Flow Description</h4>
+                    <p>${this.formatMessage(businessFlow.preview)}</p>
                 </div>
             `;
-
-            // Store diagram ID for export
-            if (content.business_flow.diagram_id) {
-                this.currentDiagramIds.business_flow = content.business_flow.diagram_id;
-                document.getElementById('exportBusinessFlow').style.display = 'block';
-            }
+            previewDiv.style.display = 'block';
         }
-
-        // Update documentation panel
-        if (content.documentation) {
-            document.getElementById('documentation-content').innerHTML =
-                this.renderMarkdown(content.documentation);
-            document.getElementById('exportDocumentation').style.display = 'block';
-        }
-    }
-
-    clearContentPanels() {
-        document.getElementById('prototype-content').innerHTML =
-            '<p class="placeholder">Prototype design will appear here after you send a message.</p>';
-        document.getElementById('ui-flow-content').innerHTML =
-            '<p class="placeholder">UI flow diagram will appear here.</p>';
-        document.getElementById('business-flow-content').innerHTML =
-            '<p class="placeholder">Business flow diagram will appear here.</p>';
-        document.getElementById('documentation-content').innerHTML =
-            '<p class="placeholder">Design documentation will appear here.</p>';
-
-        document.getElementById('exportUiFlow').style.display = 'none';
-        document.getElementById('exportBusinessFlow').style.display = 'none';
-        document.getElementById('exportDocumentation').style.display = 'none';
     }
 
     setInputEnabled(enabled) {
@@ -227,39 +207,6 @@ class ChatInterface {
         formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
         formatted = formatted.replace(/`(.+?)`/g, '<code>$1</code>');
         formatted = formatted.replace(/\n/g, '<br>');
-
-        return formatted;
-    }
-
-    renderMarkdown(text) {
-        // Escape HTML first
-        let formatted = this.escapeHtml(text);
-
-        // Headers
-        formatted = formatted.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
-        formatted = formatted.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-        formatted = formatted.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-        formatted = formatted.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-        // Bold and italic
-        formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-        // Code blocks
-        formatted = formatted.replace(/```(\w+)?\n([\s\S]+?)```/g, '<pre><code>$2</code></pre>');
-        formatted = formatted.replace(/`(.+?)`/g, '<code>$1</code>');
-
-        // Lists
-        formatted = formatted.replace(/^\* (.+)$/gm, '<li>$1</li>');
-        formatted = formatted.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
-        formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-        // Line breaks
-        formatted = formatted.replace(/\n\n/g, '</p><p>');
-        formatted = '<p>' + formatted + '</p>';
-
-        // Clean up empty paragraphs
-        formatted = formatted.replace(/<p>\s*<\/p>/g, '');
 
         return formatted;
     }

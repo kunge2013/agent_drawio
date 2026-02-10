@@ -1,4 +1,4 @@
-"""FastAPI application entry point for DrawIO Agent."""
+"""FastAPI application entry point for Business Flow Designer."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -12,9 +12,9 @@ settings = get_settings()
 
 # Create FastAPI application
 app = FastAPI(
-    title="DrawIO Agent",
-    description="AI-powered prototype and diagram generation system",
-    version="1.0.0",
+    title="Business Flow Designer",
+    description="AI-powered business process flow diagram generator",
+    version="2.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc"
 )

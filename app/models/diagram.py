@@ -17,7 +17,7 @@ class Diagram(Base):
         nullable=False
     )
     diagram_type = Column(
-        Enum("ui_flow", "business_flow", "prototype", name="diagram_type"),
+        Enum("business_flow", name="diagram_type"),
         nullable=False
     )
     title = Column(String(255), nullable=False)

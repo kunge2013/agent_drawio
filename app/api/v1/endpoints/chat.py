@@ -1,7 +1,7 @@
 """Chat and conversation endpoints."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from app.schemas.message import (
     MessageRequest,
@@ -84,23 +84,20 @@ async def send_message(
     db: Session = Depends(get_db)
 ):
     """
-    Send a message and get AI-generated response with diagrams.
+    Send a message and get AI-generated business process flow diagram.
 
-    This is the main endpoint that orchestrates the entire flow:
+    This endpoint:
     1. Saves user message
-    2. Generates prototype design via LLM
-    3. Generates UI flow diagram
-    4. Generates business flow diagram
-    5. Generates design documentation
-    6. Saves all generated content
-    7. Returns AI response
+    2. Generates business process flow diagram via LLM
+    3. Saves all generated content
+    4. Returns AI response with diagram
 
     Args:
         request: Message request with conversation ID
         db: Database session
 
     Returns:
-        AI response with generated content
+        AI response with generated business flow diagram
     """
     # Initialize services
     langchain_service = LangChainService()
@@ -134,7 +131,7 @@ async def send_message(
 
     try:
         # Get conversation history
-        history = db.query(Message).filter(
+        history: List[Message] = db.query(Message).filter(
             Message.conversation_id == conversation.id
         ).order_by(Message.created_at).all()
 
@@ -143,63 +140,28 @@ async def send_message(
             for msg in history
         ]
 
-        # Generate prototype design
-        prototype_data = await langchain_service.generate_prototype(
-            request.message,
-            history_list
-        )
-
-        # Generate UI flow
-        ui_flow_data = await langchain_service.generate_ui_flow(
-            prototype_data,
-            request.message
-        )
-        ui_flow_xml = drawio_generator.generate_ui_flow_diagram(
-            ui_flow_data["flow_data"]
-        )
-
         # Generate business flow
         business_flow_data = await langchain_service.generate_business_flow(
             request.message,
-            prototype_data
+            history_list
         )
         business_flow_xml = drawio_generator.generate_business_flow_diagram(
             business_flow_data["business_flow"]
         )
 
-        # Generate documentation
-        all_data = {
-            "prototype": prototype_data,
-            "ui_flow": ui_flow_data,
-            "business_flow": business_flow_data
-        }
-        documentation = await langchain_service.generate_documentation(all_data)
-
         # Save design
         from app.models.design import Design
         design = Design(
             conversation_id=conversation.id,
-            name=f"Design for conversation {conversation.id}",
-            description=request.message,
-            prototype_data=prototype_data,
-            documentation=documentation
+            name=f"Business Flow for conversation {conversation.id}",
+            description=request.message
         )
         db.add(design)
         db.commit()
         db.refresh(design)
 
-        # Save diagrams
+        # Save diagram
         from app.models.diagram import Diagram
-
-        ui_diagram = Diagram(
-            design_id=design.id,
-            diagram_type="ui_flow",
-            title="UI Flow Diagram",
-            drawio_xml=ui_flow_xml,
-            flow_data=ui_flow_data["flow_data"]
-        )
-        db.add(ui_diagram)
-
         business_diagram = Diagram(
             design_id=design.id,
             diagram_type="business_flow",
@@ -211,27 +173,21 @@ async def send_message(
         db.commit()
 
         # Generate assistant response
-        screens_count = len(prototype_data.get("screens", []))
-        ui_nodes_count = len(ui_flow_data["flow_data"].get("nodes", []))
         business_processes_count = len(
             business_flow_data["business_flow"].get("processes", [])
         )
+        decisions_count = len(
+            business_flow_data["business_flow"].get("decisions", [])
+        )
 
-        assistant_message = f"""Based on your requirements, I've generated:
+        assistant_message = f"""Based on your requirements, I've generated a **Business Process Flow** diagram with:
 
-**1. Prototype Design**
-{prototype_data.get('prototype_description', 'See prototype panel')}
+- **{business_processes_count}** process steps
+- **{decisions_count}** decision points
 
-**2. UI Flow Diagram**
-{ui_nodes_count} screens identified with navigation flows.
+The diagram shows the complete flow of your business process, including all actors, processes, and decision branches.
 
-**3. Business Process Flow**
-{business_processes_count} process steps defined.
-
-**4. Design Documentation**
-Comprehensive documentation explaining the design philosophy and decisions.
-
-You can export the diagrams as .drawio files from the panels on the right."""
+You can view the diagram in the panel and export it as a .drawio file."""
 
         # Save assistant message
         bot_message = Message(
@@ -247,18 +203,11 @@ You can export the diagrams as .drawio files from the panels on the right."""
             conversation_id=conversation.id,
             message=assistant_message,
             generated_content={
-                "prototype": prototype_data.get("prototype_description"),
-                "ui_flow": {
-                    "diagram_id": ui_diagram.id,
-                    "preview": f"<p>UI Flow with {ui_nodes_count} screens</p>",
-                    "xml": ui_flow_xml
-                },
                 "business_flow": {
                     "diagram_id": business_diagram.id,
-                    "preview": f"<p>Business Flow with {business_processes_count} steps</p>",
+                    "preview": business_flow_data["raw_response"],
                     "xml": business_flow_xml
-                },
-                "documentation": documentation
+                }
             }
         )
 

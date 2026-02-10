@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DrawIO Agent - AI Design Assistant</title>
+    <title>Business Flow Designer - AI Flow Diagram Generator</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- DrawIO / mxGraph library -->
+    <script src="https://cdn.jsdelivr.net/npm/mxgraph@4.2.2/javascript/mxClient.min.js"></script>
 </head>
 <body>
     <div class="container">
         <header class="app-header">
-            <h1>DrawIO Agent</h1>
-            <p class="subtitle">AI-Powered Design & Diagram Generator</p>
+            <h1>Business Flow Designer</h1>
+            <p class="subtitle">AI-Powered Business Process Flow Diagram Generator</p>
         </header>
 
         <main class="main-content">
             <!-- Chat Section -->
             <section class="chat-section">
                 <div class="chat-header">
-                    <h2>Design Conversation</h2>
+                    <h2>Describe Your Process</h2>
                     <button id="newConversation" class="btn-secondary">New Conversation</button>
                 </div>
 
@@ -25,8 +27,8 @@
                     <!-- Welcome message -->
                     <div class="message bot">
                         <div class="message-content">
-                            Welcome! I'm your AI design assistant. Describe your product requirements
-                            and I'll help you create prototypes, UI flows, and business process diagrams.
+                            Welcome! I'm your AI business process designer. Describe your business process
+                            and I'll generate a professional flow diagram that you can view and export.
                         </div>
                     </div>
                 </div>
@@ -34,53 +36,40 @@
                 <div class="chat-input-container">
                     <textarea
                         id="userInput"
-                        placeholder="Describe your product requirements (e.g., 'Create a task management app with user authentication, project boards, and team collaboration features')"
+                        placeholder="Describe your business process (e.g., 'Create an order processing flow with payment verification, inventory check, and shipping confirmation')"
                         rows="3"></textarea>
                     <button id="sendMessage" class="btn-primary">
-                        <span class="btn-text">Send</span>
-                        <span class="btn-loading" style="display: none;">Sending...</span>
+                        <span class="btn-text">Generate Flow</span>
+                        <span class="btn-loading" style="display: none;">Generating...</span>
                     </button>
                 </div>
             </section>
 
             <!-- Generated Content Section -->
             <section class="generated-content">
-                <div class="content-tabs">
-                    <button class="tab-btn active" data-tab="prototype">Prototype</button>
-                    <button class="tab-btn" data-tab="ui-flow">UI Flow</button>
-                    <button class="tab-btn" data-tab="business-flow">Business Flow</button>
-                    <button class="tab-btn" data-tab="documentation">Documentation</button>
+                <div class="content-header">
+                    <h2>Business Process Flow</h2>
+                    <button id="exportBusinessFlow" class="btn-export" style="display: none;">
+                        <span class="export-icon">&#8659;</span> Export .drawio
+                    </button>
                 </div>
 
                 <div class="content-panel">
-                    <div id="prototype-panel" class="panel active">
-                        <div id="prototype-content" class="panel-content">
-                            <p class="placeholder">Prototype design will appear here after you send a message.</p>
+                    <div id="business-flow-panel" class="panel active">
+                        <!-- DrawIO Canvas -->
+                        <div id="drawio-container" class="drawio-container">
+                            <div id="drawio-canvas" class="drawio-canvas"></div>
                         </div>
-                    </div>
-                    <div id="ui-flow-panel" class="panel">
-                        <div id="ui-flow-content" class="panel-content">
-                            <p class="placeholder">UI flow diagram will appear here.</p>
+
+                        <!-- Loading placeholder -->
+                        <div id="flow-placeholder" class="placeholder">
+                            <div class="placeholder-icon">&#8644;</div>
+                            <p>Your business process flow diagram will appear here.</p>
+                            <p class="placeholder-hint">Describe a business process to get started.</p>
                         </div>
-                        <button id="exportUiFlow" class="btn-export" style="display: none;">
-                            Export .drawio
-                        </button>
-                    </div>
-                    <div id="business-flow-panel" class="panel">
-                        <div id="business-flow-content" class="panel-content">
-                            <p class="placeholder">Business flow diagram will appear here.</p>
-                        </div>
-                        <button id="exportBusinessFlow" class="btn-export" style="display: none;">
-                            Export .drawio
-                        </button>
-                    </div>
-                    <div id="documentation-panel" class="panel">
-                        <div id="documentation-content" class="panel-content">
-                            <p class="placeholder">Design documentation will appear here.</p>
-                        </div>
-                        <button id="exportDocumentation" class="btn-export" style="display: none;">
-                            Export .md
-                        </button>
+
+                        <!-- Text preview -->
+                        <div id="flow-preview" class="flow-preview" style="display: none;"></div>
                     </div>
                 </div>
             </section>
@@ -88,6 +77,7 @@
     </div>
 
     <script src="/static/js/api.js"></script>
+    <script src="/static/js/drawio-viewer.js"></script>
     <script src="/static/js/chat.js"></script>
     <script src="/static/js/app.js"></script>
 </body>

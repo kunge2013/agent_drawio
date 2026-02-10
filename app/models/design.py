@@ -1,5 +1,5 @@
 """Design model."""
-from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Index, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Index, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.base import Base
@@ -18,8 +18,6 @@ class Design(Base):
     )
     name = Column(String(255), nullable=False)
     description = Column(Text)
-    prototype_data = Column(JSON)  # Stores prototype design data
-    documentation = Column(Text)  # Stores markdown documentation
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
