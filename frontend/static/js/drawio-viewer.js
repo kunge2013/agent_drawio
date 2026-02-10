@@ -29,11 +29,14 @@ class DrawIOViewer {
         // Configure graph
         this.graph.setCellsEditable(false);
         this.graph.setCellsSelectable(true);
-        this.graph.setCellsMovable(false);
+        this.graph.setCellsMovable(true);
         this.graph.setConnectable(false);
-
-        // Enable tooltips
+        this.graph.setPanning(true);
         this.graph.setTooltips(true);
+
+        // Enable panning with right mouse button
+        this.graph.panningHandler.useLeftButtonForPanning = true;
+        this.graph.panningHandler.usePopupTrigger = false;
 
         // Set default styles
         this.graph.getStylesheet().putDefaultVertexStyle(
@@ -68,7 +71,7 @@ class DrawIOViewer {
         try {
             // Create XML document
             const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
 
             // Get the mxGraphModel
             const modelNode = xmlDoc.getElementsByTagName('mxGraphModel')[0];
@@ -97,7 +100,7 @@ class DrawIOViewer {
     }
 
     /**
-     * Create a simple flow diagram from JSON data
+     * Create a simple flow diagram from JSON data (fallback)
      */
     renderFromJSON(flowData) {
         if (!this.graph) {
@@ -114,93 +117,115 @@ class DrawIOViewer {
             const vertexMap = {};
 
             let y = 50;
-            const x = 250;
+            const x = 400;
+
+            // Chinese labels
+            const startLabel = "开始";
+            const endLabel = "结束";
 
             // Add Start node
             const startVertex = this.graph.insertVertex(
-                parent, null, 'Start', x, y, 100, 50,
-                'rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;'
+                parent, null, startLabel, x, y, 100, 50,
+                'ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;'
             );
-            vertexMap['Start'] = startVertex;
+            vertexMap[startLabel] = startVertex;
             y += 100;
 
             // Add process nodes
-            processes.forEach(process => {
+            let lastVertex = startVertex;
+            for (const process of processes) {
+                const name = process.name || "处理步骤";
                 const vertex = this.graph.insertVertex(
-                    parent, null, process.name || 'Process', x, y, 160, 60,
+                    parent, null, name, x, y, 160, 60,
                     'rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;'
                 );
-                vertexMap[process.name] = vertex;
+                vertexMap[name] = vertex;
 
                 // Connect from previous node
-                const vertexIds = Object.values(vertexMap);
-                if (vertexIds.length > 1) {
-                    this.graph.insertEdge(
-                        parent, null, '', vertexIds[vertexIds.length - 2], vertex,
-                        'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;'
-                    );
-                }
+                this.graph.insertEdge(
+                    parent, null, '', lastVertex, vertex,
+                    'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;'
+                );
+                lastVertex = vertex;
                 y += 100;
-            });
+            }
 
             // Add decision nodes
-            decisions.forEach(decision => {
+            const branchEnds = [];
+            for (const decision of decisions) {
+                const name = decision.name || "决策点";
                 const vertex = this.graph.insertVertex(
-                    parent, null, decision.name || 'Decision', x, y, 120, 80,
+                    parent, null, name, x, y, 120, 80,
                     'shape=decision;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;'
                 );
-                vertexMap[decision.name] = vertex;
+                vertexMap[name] = vertex;
 
                 // Connect from previous node
-                const vertexIds = Object.values(vertexMap);
-                if (vertexIds.length > 1) {
-                    this.graph.insertEdge(
-                        parent, null, '', vertexIds[vertexIds.length - 2], vertex,
-                        'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;'
-                    );
-                }
+                this.graph.insertEdge(
+                    parent, null, '', lastVertex, vertex,
+                    'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;'
+                );
+                lastVertex = vertex;
 
                 y += 80;
 
                 // Add branches
                 if (decision.true_branch) {
+                    const trueName = decision.true_branch;
                     const trueVertex = this.graph.insertVertex(
-                        parent, null, decision.true_branch, x - 120, y, 100, 50,
+                        parent, null, trueName, x - 150, y, 120, 50,
                         'rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;'
                     );
-                    vertexMap[decision.true_branch] = trueVertex;
+                    vertexMap[trueName] = trueVertex;
+                    branchEnds.push(trueVertex);
+                    // Connect "是" (Yes) branch
                     this.graph.insertEdge(
-                        parent, null, 'Yes', vertex, trueVertex,
-                        'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#00CC00;fontStyle=1;'
+                        parent, null, '是', vertex, trueVertex,
+                        'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;fontColor=#00CC00;fontStyle=1;'
                     );
                 }
 
                 if (decision.false_branch) {
+                    const falseName = decision.false_branch;
                     const falseVertex = this.graph.insertVertex(
-                        parent, null, decision.false_branch, x + 120, y, 100, 50,
+                        parent, null, falseName, x + 150, y, 120, 50,
                         'rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;'
                     );
-                    vertexMap[decision.false_branch] = falseVertex;
+                    vertexMap[falseName] = falseVertex;
+                    branchEnds.push(falseVertex);
+                    // Connect "否" (No) branch
                     this.graph.insertEdge(
-                        parent, null, 'No', vertex, falseVertex,
-                        'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#CC0000;fontStyle=1;'
+                        parent, null, '否', vertex, falseVertex,
+                        'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;fontColor=#CC0000;fontStyle=1;'
                     );
                 }
                 y += 80;
-            });
+            }
 
             // Add End node
+            if (branchEnds.length > 0) {
+                y += 50;
+            }
+
             const endVertex = this.graph.insertVertex(
-                parent, null, 'End', x, y, 100, 50,
-                'rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=14;'
+                parent, null, endLabel, x, y, 100, 50,
+                'ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=14;'
             );
 
-            // Connect from previous node
-            const vertexIds = Object.values(vertexMap);
-            if (vertexIds.length > 0) {
+            // Connect to end
+            if (branchEnds.length > 0) {
+                // Connect all branch ends to end node
+                for (const branchEnd of branchEnds) {
+                    this.graph.insertEdge(
+                        parent, null, '', branchEnd, endVertex,
+                        'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;'
+                    );
+                }
+            } else {
+                // Direct connection
                 this.graph.insertEdge(
-                    parent, null, '', vertexIds[vertexIds.length - 1], endVertex,
-                    'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;'
+                    parent, null, '', lastVertex, endVertex,
+                    'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;'
                 );
             }
 
@@ -244,64 +269,6 @@ class DrawIOViewer {
         const model = this.graph.getModel();
         const node = codec.encode(model);
         return mxUtils.getXml(node);
-    }
-
-    exportToPNG(callback) {
-        if (!this.graph) {
-            callback(null);
-            return;
-        }
-
-        try {
-            const xml = this.exportToXML();
-            if (!xml) {
-                callback(null);
-                return;
-            }
-
-            // Create canvas and export
-            const canvas = document.createElement('canvas');
-            const img = new Image();
-
-            // Use mxGraph's built-in export
-            const bounds = this.graph.getGraphBounds();
-            const scale = 1;
-            const width = Math.ceil(bounds.width * scale) + 1;
-            const height = Math.ceil(bounds.height * scale) + 1;
-
-            canvas.width = width;
-            canvas.height = height;
-
-            // Render to canvas
-            const ctx = canvas.getContext('2d');
-            ctx.scale(scale, scale);
-
-            // Simple SVG-based export
-            const svgXml = this.exportToSVG();
-            if (svgXml) {
-                const svgBlob = new Blob([svgXml], {type: 'image/svg+xml;charset=utf-8'});
-                const url = URL.createObjectURL(svgBlob);
-                callback(url);
-            } else {
-                callback(null);
-            }
-
-        } catch (error) {
-            console.error('Error exporting to PNG:', error);
-            callback(null);
-        }
-    }
-
-    exportToSVG() {
-        if (!this.graph) return null;
-
-        try {
-            const svgCanvas = this.graph.createSvg();
-            return svgCanvas.getXml();
-        } catch (error) {
-            console.error('Error exporting to SVG:', error);
-            return null;
-        }
     }
 }
 

@@ -63,13 +63,14 @@ class LangChainService:
     def _format_conversation_history(self, history: List[Dict[str, str]]) -> str:
         """Format conversation history for prompt."""
         if not history:
-            return "No previous conversation."
+            return "无历史对话"
 
         formatted = []
         for msg in history[-5:]:  # Only include last 5 messages
             role = msg.get("role", "unknown")
             content = msg.get("content", "")
-            formatted.append(f"{role.upper()}: {content}")
+            role_zh = "用户" if role == "user" else "助手"
+            formatted.append(f"{role_zh}: {content}")
 
         return "\n".join(formatted)
 
@@ -78,27 +79,36 @@ class LangChainService:
         processes = []
         decisions = []
 
-        # Extract processes
-        process_pattern = r"PROCESS:\s*(\w+)(?:\s*\[actor=(\w+)\])?"
+        # Extract processes - 支持中文字符
+        process_pattern = r"PROCESS:\s*([^\[\n]+?)(?:\s*\[actor=([^\[\]]+)\])?"
         for match in re.finditer(process_pattern, text, re.IGNORECASE):
-            processes.append({
-                "name": match.group(1),
-                "actor": match.group(2) or "System"
-            })
+            name = match.group(1).strip()
+            actor = match.group(2).strip() if match.group(2) else "系统"
+            if name and not name.startswith("DECISION"):
+                processes.append({
+                    "name": name,
+                    "actor": actor
+                })
 
-        # Extract decisions
-        decision_pattern = r"DECISION:\s*(\w+)(?:\s*->\s*Yes:\s*(\w+),\s*No:\s*(\w+))?"
+        # Extract decisions - 支持中文 "是/否" 和英文 "Yes/No"
+        # 格式: DECISION: 决策名称 -> 是:步骤A, 否:步骤B 或 DECISION: 决策名称 -> Yes:StepA, No:StepB
+        decision_pattern = r"DECISION:\s*([^\[->\n]+?)\s*(?:->\s*(?:是|Yes):\s*([^\n,]+?)(?:\s*,\s*(?:否|No):\s*([^\n]+?))?)?"
         for match in re.finditer(decision_pattern, text, re.IGNORECASE):
-            decisions.append({
-                "name": match.group(1),
-                "true_branch": match.group(2),
-                "false_branch": match.group(3)
-            })
+            name = match.group(1).strip() if match.group(1) else ""
+            true_branch = match.group(2).strip() if match.group(2) else None
+            false_branch = match.group(3).strip() if match.group(3) else None
 
-        # If no structured data, create generic flow
+            if name:
+                decisions.append({
+                    "name": name,
+                    "true_branch": true_branch,
+                    "false_branch": false_branch
+                })
+
+        # If no structured data, create generic flow (中文)
         if not processes:
-            processes.append({"name": "Start Process", "actor": "User"})
-            processes.append({"name": "Process Request", "actor": "System"})
-            processes.append({"name": "Complete", "actor": "System"})
+            processes.append({"name": "开始", "actor": "用户"})
+            processes.append({"name": "处理请求", "actor": "系统"})
+            processes.append({"name": "完成", "actor": "系统"})
 
         return {"processes": processes, "decisions": decisions}
